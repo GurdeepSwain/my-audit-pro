@@ -4,8 +4,14 @@ import { Routes, Route, NavLink } from 'react-router-dom';
 import LoginScreen from './components/LoginScreen';
 import Register from './components/Register';
 import Dashboard from './components/Dashboard';
-import DailyAuditEntry from './components/DailyAuditEntry';
-import WeeklyAuditEntry from './components/WeeklyAuditEntry';
+import AuditPage from './components/AuditPage'; // Your audit dashboard landing page
+import DailyAuditForm from './components/DailyAuditForm';
+import WeeklyAuditForm from './components/WeeklyAuditForm';
+import MonthlyAuditForm from './components/MonthlyAuditForm';
+import IssueForm from './components/IssueForm';
+import IssuesDashboard from './components/IssuesDashboard';
+import EditAuditForm from './components/EditAuditForm'; // if you have one for audits
+import EditIssueForm from './components/EditIssueForm'; // a similar component to edit issues
 import PrivateRoute from './PrivateRoute';
 
 // Import the authentication context and Firebase auth methods
@@ -16,7 +22,6 @@ import { signOut } from 'firebase/auth';
 function App() {
   const { currentUser } = useAuth();
 
-  // Logout handler: sign the user out using Firebase's signOut method
   const handleLogout = async () => {
     try {
       await signOut(auth);
@@ -29,15 +34,17 @@ function App() {
     <div>
       <nav style={styles.nav}>
         {currentUser ? (
-          // If the user is logged in, show the protected links and a Logout button
           <>
             <NavLink style={styles.link} to="/dashboard">Dashboard</NavLink>
-            <NavLink style={styles.link} to="/daily-audit">Daily Audit</NavLink>
-            <NavLink style={styles.link} to="/weekly-audit">Weekly Audit</NavLink>
+            <NavLink style={styles.link} to="/audit">Audit Dashboard</NavLink>
+            <NavLink style={styles.link} to="/daily">Daily Audit</NavLink>
+            <NavLink style={styles.link} to="/weekly">Weekly Audit</NavLink>
+            <NavLink style={styles.link} to="/monthly">Monthly Audit</NavLink>
+            <NavLink style={styles.link} to="/issues">Issues Dashboard</NavLink>
+            <NavLink style={styles.link} to="/new-issue">New Issue</NavLink>
             <button onClick={handleLogout} style={styles.logoutButton}>Logout</button>
           </>
         ) : (
-          // If no user is logged in, show the public routes: Login and Register
           <>
             <NavLink style={styles.link} to="/">Login</NavLink>
             <NavLink style={styles.link} to="/register">Register</NavLink>
@@ -46,35 +53,20 @@ function App() {
       </nav>
       <div style={styles.container}>
         <Routes>
-          {/* Public routes */}
+          {/* Public Routes */}
           <Route path="/" element={<LoginScreen />} />
           <Route path="/register" element={<Register />} />
 
-          {/* Protected routes */}
-          <Route
-            path="/dashboard"
-            element={
-              <PrivateRoute>
-                <Dashboard />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/daily-audit"
-            element={
-              <PrivateRoute>
-                <DailyAuditEntry />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/weekly-audit"
-            element={
-              <PrivateRoute>
-                <WeeklyAuditEntry />
-              </PrivateRoute>
-            }
-          />
+          {/* Protected Routes */}
+          <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
+          <Route path="/audit" element={<PrivateRoute><AuditPage /></PrivateRoute>} />
+          <Route path="/daily" element={<PrivateRoute><DailyAuditForm /></PrivateRoute>} />
+          <Route path="/weekly" element={<PrivateRoute><WeeklyAuditForm /></PrivateRoute>} />
+          <Route path="/monthly" element={<PrivateRoute><MonthlyAuditForm /></PrivateRoute>} />
+          <Route path="/new-issue" element={<PrivateRoute><IssueForm /></PrivateRoute>} />
+          <Route path="/issues" element={<PrivateRoute><IssuesDashboard /></PrivateRoute>} />
+          <Route path="/edit-audit/:auditId" element={<PrivateRoute><EditAuditForm /></PrivateRoute>} />
+          <Route path="/edit-issue/:issueId" element={<PrivateRoute><EditIssueForm /></PrivateRoute>} />
         </Routes>
       </div>
     </div>
@@ -87,8 +79,8 @@ const styles = {
     backgroundColor: '#f8f9fa',
     display: 'flex',
     justifyContent: 'center',
-    flexWrap: 'wrap',
-    gap: '10px'
+    gap: '10px',
+    flexWrap: 'wrap'
   },
   link: {
     textDecoration: 'none',
