@@ -4,8 +4,8 @@ import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 
-const IssueForm = () => {
-  const { currentUser } = useAuth(); // to capture user details (if needed)
+const IssueForm = ({ linkedAuditId = "" }) => {
+  const { currentUser } = useAuth(); // to capture user details
   // Define initial state for the issue fields.
   const [formData, setFormData] = useState({
     category: "Layered Process Audit", // fixed in our example
@@ -26,7 +26,7 @@ const IssueForm = () => {
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
-  // Handle input changes for each field
+  // Handle input changes for each field.
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -41,19 +41,23 @@ const IssueForm = () => {
     setError('');
     setSuccessMessage('');
 
-    // Build the issue data with additional metadata (e.g., user details)
+    // Build the issue data with additional metadata.
     const issueData = {
       ...formData,
+      linkedAuditId, // if provided, indicates which audit this issue is linked to.
       createdBy: currentUser ? { uid: currentUser.uid, email: currentUser.email } : null,
       createdAt: serverTimestamp(),
-      status: "Open"  // You can track status ("Open", "In Progress", "Resolved", etc.)
+      status: "Open",  // status can be "Open", "In Progress", "Resolved", etc.
+      // Initially, the editedBy array includes only the creator.
+      editedBy: currentUser ? [{ uid: currentUser.uid, email: currentUser.email }] : [],
+      lastEditedBy: currentUser ? { uid: currentUser.uid, email: currentUser.email } : null
     };
 
     try {
       const docRef = await addDoc(collection(db, 'issues'), issueData);
       console.log("Issue submitted with ID:", docRef.id);
       setSuccessMessage('Issue submitted successfully!');
-      // Optionally reset the form (or navigate away)
+      // Optionally reset the form.
       setFormData({
         category: "Layered Process Audit",
         subcategory: "FIP 1",
@@ -95,7 +99,7 @@ const IssueForm = () => {
             <option value="Conventional">Conventional</option>
           </select>
         </div>
-        {/* Section number (1,2,3) */}
+        {/* Section number */}
         <div style={{ marginBottom: '10px' }}>
           <label>Section #: </label>
           <select name="section" value={formData.section} onChange={handleChange} required>
@@ -104,7 +108,7 @@ const IssueForm = () => {
             <option value="3">3</option>
           </select>
         </div>
-        {/* Item number (question/item number) */}
+        {/* Item number */}
         <div style={{ marginBottom: '10px' }}>
           <label>Item #: </label>
           <input type="text" name="item" value={formData.item} onChange={handleChange} required />

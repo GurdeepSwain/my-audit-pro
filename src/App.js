@@ -4,17 +4,18 @@ import { Routes, Route, NavLink } from 'react-router-dom';
 import LoginScreen from './components/LoginScreen';
 import Register from './components/Register';
 import Dashboard from './components/Dashboard';
-import AuditPage from './components/AuditPage'; // Your audit dashboard landing page
+import AuditPage from './components/AuditPage';
 import DailyAuditForm from './components/DailyAuditForm';
 import WeeklyAuditForm from './components/WeeklyAuditForm';
 import MonthlyAuditForm from './components/MonthlyAuditForm';
 import IssueForm from './components/IssueForm';
 import IssuesDashboard from './components/IssuesDashboard';
-import EditAuditForm from './components/EditAuditForm'; // if you have one for audits
-import EditIssueForm from './components/EditIssueForm'; // a similar component to edit issues
-import PrivateRoute from './PrivateRoute';
+import EditAuditForm from './components/EditAuditForm';
+import EditIssueForm from './components/EditIssueForm';
+import RangeAuditDashboard from './components/RangeAuditDashboard';
+import LayeredAuditMatrix from './components/LayeredAuditMatrix'; // <--- Import the matrix component
 
-// Import the authentication context and Firebase auth methods
+import PrivateRoute from './PrivateRoute';
 import { useAuth } from './contexts/AuthContext';
 import { auth } from './firebase';
 import { signOut } from 'firebase/auth';
@@ -37,6 +38,8 @@ function App() {
           <>
             <NavLink style={styles.link} to="/dashboard">Dashboard</NavLink>
             <NavLink style={styles.link} to="/audit">Audit Dashboard</NavLink>
+            <NavLink style={styles.link} to="/range-audit">Range Audit Dashboard</NavLink>
+            <NavLink style={styles.link} to="/matrix">Matrix</NavLink> {/* <--- New nav link */}
             <NavLink style={styles.link} to="/daily">Daily Audit</NavLink>
             <NavLink style={styles.link} to="/weekly">Weekly Audit</NavLink>
             <NavLink style={styles.link} to="/monthly">Monthly Audit</NavLink>
@@ -60,6 +63,8 @@ function App() {
           {/* Protected Routes */}
           <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
           <Route path="/audit" element={<PrivateRoute><AuditPage /></PrivateRoute>} />
+          <Route path="/range-audit" element={<PrivateRoute><RangeAuditDashboard /></PrivateRoute>} />
+          <Route path="/matrix" element={<PrivateRoute><LayeredAuditMatrix /></PrivateRoute>} /> {/* <--- New route */}
           <Route path="/daily" element={<PrivateRoute><DailyAuditForm /></PrivateRoute>} />
           <Route path="/weekly" element={<PrivateRoute><WeeklyAuditForm /></PrivateRoute>} />
           <Route path="/monthly" element={<PrivateRoute><MonthlyAuditForm /></PrivateRoute>} />

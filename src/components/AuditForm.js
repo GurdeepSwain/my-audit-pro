@@ -9,31 +9,54 @@ import IssueSubForm from './IssueSubForm';
 // Fixed answer options for every question
 const defaultRadioOptions = ["Satisfactory", "Not Satisfactory", "Not Applicable"];
 
+// Helper function to compute ISO week (format "YYYY-W##")
+// This is a basic implementation. For more robust handling, consider using a library.
+const computeWeek = (dateString) => {
+  const date = new Date(dateString);
+  // Set to nearest Thursday: current date + 4 - current day number (treat Sunday as 7)
+  const day = date.getDay() === 0 ? 7 : date.getDay();
+  date.setDate(date.getDate() + 4 - day);
+  const yearStart = new Date(date.getFullYear(), 0, 1);
+  const weekNo = Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
+  return `${date.getFullYear()}-W${weekNo.toString().padStart(2, '0')}`;
+};
+
 const AuditForm = ({ auditType }) => {
   // Default subcategory is the first key in the JSON configuration.
   const defaultSubcategory = Object.keys(questionsConfig)[0];
   const [subcategory, setSubcategory] = useState(defaultSubcategory);
+
   // Nested answers: { sectionName: { questionId: (string | { answer, issue }) } }
   const [answers, setAnswers] = useState({});
+
+  // For the date field
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+
   // For daily audits, track time-of-day ("M", "D", "A")
   const [timeOfDay, setTimeOfDay] = useState("M");
+
+  // For weekly audits, track whether it's by Quality Tech or Operations Manager
+  const [weeklySubType, setWeeklySubType] = useState("Quality Tech");
+
+  // UI states
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+
   const { currentUser } = useAuth();
 
   // The JSON configuration is structured by subcategory and then by section.
   const sections = questionsConfig[subcategory] || {};
 
   // When a radio button changes for a given question.
+  // If "Not Satisfactory" is selected, store an object with { answer: "Not Satisfactory", issue: {} }.
   const handleAnswerChange = (sectionName, questionId, value) => {
     setAnswers(prev => ({
       ...prev,
       [sectionName]: {
         ...prev[sectionName],
         [questionId]: value === "Not Satisfactory"
-          ? { answer: "Not Satisfactory", issue: {} } // initialize issue object
+          ? { answer: "Not Satisfactory", issue: {} }
           : value
       }
     }));
@@ -71,11 +94,17 @@ const AuditForm = ({ auditType }) => {
     setError('');
     setSuccessMessage('');
 
+    // Compute additional fields from the date.
+    const computedMonth = date.slice(0, 7); // "YYYY-MM"
+    const computedWeek = computeWeek(date);
+
     // Build the audit data object.
     const auditData = {
       auditType,
       date,
       subcategory,
+      week: computedWeek,
+      month: computedMonth,
       answers,
       completed: true,
       createdBy: {
@@ -88,8 +117,15 @@ const AuditForm = ({ auditType }) => {
       },
       createdAt: serverTimestamp()
     };
+
+    // If daily, store the timeOfDay
     if (auditType === 'daily') {
       auditData.timeOfDay = timeOfDay;
+    }
+
+    // If weekly, store which type of weekly audit it is
+    if (auditType === 'weekly') {
+      auditData.weeklySubType = weeklySubType; // "Quality Tech" or "Operations Manager"
     }
 
     try {
@@ -98,9 +134,8 @@ const AuditForm = ({ auditType }) => {
       console.log(`Submitted ${auditType} Audit:`, auditData);
       console.log(`Audit ID: ${auditDocRef.id}`);
 
-      // Now, for every question answered as "Not Satisfactory", create an issue document.
+      // For every question answered as "Not Satisfactory", create an issue document.
       const issuePromises = [];
-      // Loop over each section in answers.
       for (const section in answers) {
         for (const questionId in answers[section]) {
           const ans = answers[section][questionId];
@@ -111,7 +146,8 @@ const AuditForm = ({ auditType }) => {
               section,
               item: questionId,
               date,
-              // Spread any additional details provided in the issue subform.
+              week: computedWeek,
+              month: computedMonth,
               ...ans.issue,
               status: "Open", // default status
               createdBy: {
@@ -142,6 +178,8 @@ const AuditForm = ({ auditType }) => {
       <form onSubmit={handleSubmit}>
         {error && <p style={{ color: 'red' }}>{error}</p>}
         {successMessage && <p style={{ color: 'green' }}>{successMessage}</p>}
+        
+        {/* Date */}
         <div style={{ marginBottom: '10px' }}>
           <label>Date: </label>
           <input 
@@ -151,6 +189,8 @@ const AuditForm = ({ auditType }) => {
             required
           />
         </div>
+        
+        {/* Time of Day for Daily Audits */}
         {auditType === 'daily' && (
           <div style={{ marginBottom: '10px' }}>
             <label>Time of Day: </label>
@@ -165,6 +205,23 @@ const AuditForm = ({ auditType }) => {
             </select>
           </div>
         )}
+
+        {/* Weekly Sub-Type for Weekly Audits */}
+        {auditType === 'weekly' && (
+          <div style={{ marginBottom: '10px' }}>
+            <label>Weekly Audit By: </label>
+            <select 
+              value={weeklySubType} 
+              onChange={(e) => setWeeklySubType(e.target.value)}
+              required
+            >
+              <option value="Quality Tech">Quality Tech</option>
+              <option value="Operations Manager">Operations Manager</option>
+            </select>
+          </div>
+        )}
+
+        {/* Subcategory */}
         <div style={{ marginBottom: '10px' }}>
           <label>Subcategory: </label>
           <select 
@@ -177,6 +234,7 @@ const AuditForm = ({ auditType }) => {
             ))}
           </select>
         </div>
+        
         {/* Render questions grouped by section */}
         {Object.entries(sections).map(([sectionName, questions]) => (
           <div key={sectionName} style={{ marginBottom: '20px', padding: '10px', border: '1px solid #ddd' }}>
@@ -218,7 +276,7 @@ const AuditForm = ({ auditType }) => {
                       required
                     />
                   )}
-                  {/* If the selected option is "Not Satisfactory", render the IssueSubForm */}
+                  {/* Render the IssueSubForm if "Not Satisfactory" is selected */}
                   {selectedOption === "Not Satisfactory" && (
                     <IssueSubForm 
                       autoData={getAutoData(sectionName, q.id)}
@@ -231,6 +289,7 @@ const AuditForm = ({ auditType }) => {
             })}
           </div>
         ))}
+
         <button type="submit" disabled={loading}>
           {loading ? 'Submitting...' : `Submit ${auditType.charAt(0).toUpperCase() + auditType.slice(1)} Audit`}
         </button>

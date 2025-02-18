@@ -23,6 +23,14 @@ const IssuesDashboard = () => {
     fetchIssues();
   }, []);
 
+  // Helper function to format Firestore Timestamps to a local date/time string.
+  const formatTimestamp = (timestamp) => {
+    if (timestamp && typeof timestamp.toDate === 'function') {
+      return timestamp.toDate().toLocaleString();
+    }
+    return timestamp || "";
+  };
+
   return (
     <div style={{ maxWidth: '1000px', margin: 'auto', padding: '20px' }}>
       <h2>Issues Dashboard</h2>
@@ -42,6 +50,11 @@ const IssuesDashboard = () => {
             <th>Initials</th>
             <th>Completion Date</th>
             <th>Status</th>
+            {/* <th>Linked Audit ID</th>
+            <th>Created By</th>
+            <th>Created At</th>
+            <th>Last Edited By</th>
+            <th>Last Edited At</th> */}
             <th>Edit</th>
           </tr>
         </thead>
@@ -61,6 +74,11 @@ const IssuesDashboard = () => {
               <td>{issue.initials}</td>
               <td>{issue.completionDate}</td>
               <td>{issue.status}</td>
+              {/* <td>{issue.linkedAuditId || "-"}</td>
+              <td>{issue.createdBy ? issue.createdBy.email : "-"}</td>
+              <td>{formatTimestamp(issue.createdAt)}</td>
+              <td>{issue.lastEditedBy ? issue.lastEditedBy.email : "-"}</td>
+              <td>{formatTimestamp(issue.lastEditedAt)}</td> */}
               <td>
                 <NavLink to={`/edit-issue/${issue.id}`}>Edit</NavLink>
               </td>

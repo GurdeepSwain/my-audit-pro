@@ -34,7 +34,7 @@ const EditIssueForm = () => {
     fetchIssue();
   }, [issueId]);
 
-  // Handle changes for each input field
+  // Handle input changes for each field.
   const handleChange = (e) => {
     const { name, value } = e.target;
     setIssueData(prev => ({
@@ -43,21 +43,37 @@ const EditIssueForm = () => {
     }));
   };
 
-  // Handle form submission
+  // Handle form submission.
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
     try {
       const issueDocRef = doc(db, 'issues', issueId);
-      await updateDoc(issueDocRef, {
+      
+      // Prepare the updated data.
+      const updatedData = {
         ...issueData,
-        // Update the lastEditedBy field with current user info and add a lastEditedAt timestamp
         lastEditedBy: currentUser ? { uid: currentUser.uid, email: currentUser.email } : null,
         lastEditedAt: serverTimestamp()
-      });
+      };
+      
+      // Update the editedBy array:
+      // If editedBy already exists, add the current user if not already in it.
+      if (currentUser) {
+        if (issueData.editedBy && Array.isArray(issueData.editedBy)) {
+          const alreadyExists = issueData.editedBy.some(user => user.uid === currentUser.uid);
+          if (!alreadyExists) {
+            updatedData.editedBy = [...issueData.editedBy, { uid: currentUser.uid, email: currentUser.email }];
+          }
+        } else {
+          updatedData.editedBy = [{ uid: currentUser.uid, email: currentUser.email }];
+        }
+      }
+
+      await updateDoc(issueDocRef, updatedData);
       setSuccessMessage('Issue updated successfully!');
-      // After a short delay, navigate back to the Issues Dashboard
+      // After a short delay, navigate back to the Issues Dashboard.
       setTimeout(() => {
         navigate('/issues');
       }, 2000);
@@ -75,7 +91,7 @@ const EditIssueForm = () => {
       <h2>Edit Issue</h2>
       {successMessage && <p style={{ color: 'green' }}>{successMessage}</p>}
       <form onSubmit={handleSubmit}>
-        {/* Category (read-only, if fixed) */}
+        {/* Category (read-only) */}
         <div style={{ marginBottom: '10px' }}>
           <label>Category: </label>
           <input type="text" name="category" value={issueData.category || ''} readOnly />

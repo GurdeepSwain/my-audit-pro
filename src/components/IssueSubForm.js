@@ -66,6 +66,23 @@ const IssueSubForm = ({ autoData, issueData, onIssueChange }) => {
           onChange={(e) => onIssueChange("completionDate", e.target.value)}
         />
       </div>
+
+      {/* Display metadata if available */}
+      {issueData.linkedAuditId && (
+        <div style={{ marginTop: '10px', fontSize: '0.9em', color: '#555' }}>
+          <p><strong>Linked Audit ID:</strong> {issueData.linkedAuditId}</p>
+        </div>
+      )}
+      {issueData.createdBy && (
+        <div style={{ fontSize: '0.9em', color: '#555' }}>
+          <p><strong>Created By:</strong> {issueData.createdBy.email}</p>
+        </div>
+      )}
+      {issueData.lastEditedBy && (
+        <div style={{ fontSize: '0.9em', color: '#555' }}>
+          <p><strong>Last Edited By:</strong> {issueData.lastEditedBy.email}</p>
+        </div>
+      )}
     </div>
   );
 };

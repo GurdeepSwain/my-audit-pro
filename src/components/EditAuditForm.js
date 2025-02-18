@@ -10,12 +10,25 @@ import IssueSubForm from './IssueSubForm';
 // Fixed answer options for every question
 const defaultRadioOptions = ["Satisfactory", "Not Satisfactory", "Not Applicable"];
 
+// Helper function to compute ISO week (format "YYYY-W##")
+// Basic implementation. For more robust handling, consider using a library.
+const computeWeek = (dateString) => {
+  const date = new Date(dateString);
+  // Set to nearest Thursday: current date + 4 - current day number (with Sunday as 7)
+  const day = date.getDay() === 0 ? 7 : date.getDay();
+  date.setDate(date.getDate() + 4 - day);
+  const yearStart = new Date(date.getFullYear(), 0, 1);
+  const weekNo = Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
+  return `${date.getFullYear()}-W${weekNo.toString().padStart(2, '0')}`;
+};
+
 const EditAuditForm = () => {
   const { auditId } = useParams();
   const navigate = useNavigate();
   const { currentUser } = useAuth();
   
   const [auditData, setAuditData] = useState(null);
+  const [weeklySubType, setWeeklySubType] = useState("Quality Tech"); // For weekly audits
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -26,7 +39,11 @@ const EditAuditForm = () => {
         const auditDocRef = doc(db, 'audits', auditId);
         const auditDoc = await getDoc(auditDocRef);
         if (auditDoc.exists()) {
-          setAuditData(auditDoc.data());
+          const data = auditDoc.data();
+          setAuditData(data);
+          if(data.auditType === 'weekly'){
+            setWeeklySubType(data.weeklySubType || "Quality Tech");
+          }
         } else {
           setError('Audit not found');
         }
@@ -38,14 +55,13 @@ const EditAuditForm = () => {
     fetchAudit();
   }, [auditId]);
 
-  // Update top-level fields (e.g., date, timeOfDay)
+  // Update top-level fields (e.g., date, timeOfDay, weeklySubType)
   const handleChange = (field, value) => {
     setAuditData(prev => ({ ...prev, [field]: value }));
   };
 
   // Update nested answers.
   // We assume answers are stored as: { "Section Name": { "questionId": (string | { answer, issue }) } }
-  // When "Not Satisfactory" is selected, we store an object { answer: "Not Satisfactory", issue: {} }.
   const handleNestedAnswerChange = (section, qId, selectedOption) => {
     setAuditData(prev => ({
       ...prev,
@@ -94,32 +110,48 @@ const EditAuditForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // First update the audit document
-      const auditDocRef = doc(db, 'audits', auditId);
-      await updateDoc(auditDocRef, {
+      // Compute additional fields from the date.
+      const computedMonth = auditData.date.slice(0, 7); // "YYYY-MM"
+      const computedWeek = computeWeek(auditData.date);
+      
+      // Prepare updated auditData with week, month and, if weekly, weeklySubType.
+      const updatedAuditData = {
         ...auditData,
+        week: computedWeek,
+        month: computedMonth,
         lastEditedBy: {
           uid: currentUser.uid,
           email: currentUser.email
         },
         lastEditedAt: serverTimestamp()
-      });
+      };
+      if(auditData.auditType === 'daily'){
+        // timeOfDay is already stored in auditData.
+      }
+      if(auditData.auditType === 'weekly'){
+        updatedAuditData.weeklySubType = weeklySubType;
+      }
+      
+      // First update the audit document.
+      const auditDocRef = doc(db, 'audits', auditId);
+      await updateDoc(auditDocRef, updatedAuditData);
 
-      // Iterate over the nested answers to process issues.
-      // For each "Not Satisfactory" answer, update or create an issue document.
+      // Now iterate over the nested answers to process issues.
       const issuePromises = [];
       if (auditData.answers) {
         for (const section in auditData.answers) {
           for (const qId in auditData.answers[section]) {
             const answerValue = auditData.answers[section][qId];
             if (typeof answerValue === 'object' && answerValue.answer === "Not Satisfactory") {
-              // Build issue data object
+              // Build issue data object.
               const issueData = {
                 category: "Layered Process Audit",
                 subcategory: auditData.subcategory,
                 section: section,
                 item: qId,
                 date: auditData.date,
+                week: computedWeek,
+                month: computedMonth,
                 ...answerValue.issue,
                 status: "Open", // default status
                 updatedAt: serverTimestamp(),
@@ -129,14 +161,10 @@ const EditAuditForm = () => {
                   email: currentUser.email
                 }
               };
-
-              // Check if an issue already exists (if an issueId is stored)
               if (answerValue.issue && answerValue.issue.issueId) {
-                // Update the existing issue document
                 const issueDocRef = doc(db, 'issues', answerValue.issue.issueId);
                 issuePromises.push(updateDoc(issueDocRef, issueData));
               } else {
-                // Create a new issue document and store its ID back in the auditData
                 const createIssue = async () => {
                   const issueDocRef = await addDoc(collection(db, 'issues'), {
                     ...issueData,
@@ -146,7 +174,7 @@ const EditAuditForm = () => {
                       email: currentUser.email
                     }
                   });
-                  // Update the nested answer to store the generated issueId
+                  // Update nested answer to store the generated issueId.
                   setAuditData(prev => ({
                     ...prev,
                     answers: {
@@ -215,6 +243,20 @@ const EditAuditForm = () => {
             </select>
           </div>
         )}
+        {/* Weekly Audit Subtype */}
+        {auditData.auditType === 'weekly' && (
+          <div style={{ marginBottom: '10px' }}>
+            <label>Weekly Audit By: </label>
+            <select 
+              value={weeklySubType} 
+              onChange={(e) => setWeeklySubType(e.target.value)}
+              required
+            >
+              <option value="Quality Tech">Quality Tech</option>
+              <option value="Operations Manager">Operations Manager</option>
+            </select>
+          </div>
+        )}
         {/* Subcategory (read-only) */}
         <div style={{ marginBottom: '10px' }}>
           <label>Subcategory:</label>
@@ -224,15 +266,13 @@ const EditAuditForm = () => {
             readOnly
           />
         </div>
-        {/* Render the questions by section */}
+        {/* Render questions grouped by section */}
         {Object.entries(sections).map(([sectionName, questions]) => (
           <div key={sectionName} style={{ marginBottom: '20px', padding: '10px', border: '1px solid #ddd' }}>
             <h3>{sectionName}</h3>
             {questions.map((q) => {
-              // Retrieve the current answer for this question from auditData.answers.
               const sectionAnswers = auditData.answers?.[sectionName] || {};
               const currentAnswer = sectionAnswers[q.id];
-              // Determine the selected option: if currentAnswer is an object, use currentAnswer.answer; otherwise, use the string.
               const selectedOption = typeof currentAnswer === 'object' ? currentAnswer.answer : currentAnswer || "";
               return (
                 <div key={q.id} style={{ marginBottom: '15px' }}>
@@ -282,7 +322,7 @@ const EditAuditForm = () => {
             })}
           </div>
         ))}
-        <button type="submit">Update Audit</button>
+        <button type="submit" disabled={loading}>Update Audit</button>
       </form>
     </div>
   );
