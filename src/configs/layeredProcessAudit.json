@@ -145,55 +145,9 @@
           "type": "radio",
           "options": ["Satisfactory", "Not Satisfactory", "Not Applicable"]
         }
-      ],
-      "Section 2": [
-        {
-          "id": 1,
-          "question": "Are systemic internal issues tracked on the Natural Work Team Board - list any known issues that are missing",
-          "type": "radio",
-          "options": ["Satisfactory", "Not Satisfactory", "Not Applicable"]
-        },
-        {
-          "id": 2,
-          "question": "Are all external customer issues tracked on Natural Work Team Board - list any known issues that are missing",
-          "type": "radio",
-          "options": ["Satisfactory", "Not Satisfactory", "Not Applicable"]
-        },
-        {
-          "id": 3,
-          "question": "Are all Quality Alerts posted on the boards",
-          "type": "radio",
-          "options": ["Satisfactory", "Not Satisfactory", "Not Applicable"]
-        },
-        {
-          "id": 4,
-          "question": "Verify scrap is being marked or destroyed as per IATF requirements",
-          "type": "radio",
-          "options": ["Satisfactory", "Not Satisfactory", "Not Applicable"]
-        }
-      ],
-      "Section 3": [
-        {
-          "id": 1,
-          "question": "Are LPA's being performed by all layers of management",
-          "type": "radio",
-          "options": ["Satisfactory", "Not Satisfactory", "Not Applicable"]
-        },
-        {
-          "id": 2,
-          "question": "Is scrap handled correctly and are red bins present",
-          "type": "radio",
-          "options": ["Satisfactory", "Not Satisfactory", "Not Applicable"]
-        },
-        {
-          "id": 3,
-          "question": "Are all LPA non-conformances meeting their target dates",
-          "type": "radio",
-          "options": ["Satisfactory", "Not Satisfactory", "Not Applicable"]
-        }
       ]
     },
-    "FIP 1": {
+    "FIP 2": {
       "Section 1": [
         {
           "id": 1,
@@ -273,61 +227,9 @@
           "type": "radio",
           "options": ["Satisfactory", "Not Satisfactory", "Not Applicable"]
         }
-      ],
-      "Section 2": [
-        {
-          "id": 1,
-          "question": "Are all external customer issues tracked on Natural Work Team board",
-          "type": "radio",
-          "options": ["Satisfactory", "Not Satisfactory", "Not Applicable"]
-        },
-        {
-          "id": 2,
-          "question": "Are all Quality Alerts posted on the boards",
-          "type": "radio",
-          "options": ["Satisfactory", "Not Satisfactory", "Not Applicable"]
-        }
-      ],
-      "Section 3": [
-        {
-          "id": 1,
-          "question": "Are LPA's being performed by all layers of management?",
-          "type": "radio",
-          "options": ["Satisfactory", "Not Satisfactory", "Not Applicable"]
-        },
-        {
-          "id": 2,
-          "question": "Is scrap handled correctly and are red bins present?",
-          "type": "radio",
-          "options": ["Satisfactory", "Not Satisfactory", "Not Applicable"]
-        },
-        {
-          "id": 3,
-          "question": "Are all safety issues accounted for on the Natural Work Team Board?",
-          "type": "radio",
-          "options": ["Satisfactory", "Not Satisfactory", "Not Applicable"]
-        },
-        {
-          "id": 4,
-          "question": "Are all LPA non-conformances meeting their target dates?",
-          "type": "radio",
-          "options": ["Satisfactory", "Not Satisfactory", "Not Applicable"]
-        },
-        {
-          "id": 5,
-          "question": "Are production labels legible and easy to read?",
-          "type": "radio",
-          "options": ["Satisfactory", "Not Satisfactory", "Not Applicable"]
-        },
-        {
-          "id": 6,
-          "question": "Is proper packaging available (Apprv'd alt. packaging is acceptable)?",
-          "type": "radio",
-          "options": ["Satisfactory", "Not Satisfactory", "Not Applicable"]
-        }
       ]
     },
-    "FIP 2": {
+    "FIP 1": {
       "Section 1": [
         {
           "id": 1,

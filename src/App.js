@@ -13,7 +13,11 @@ import IssuesDashboard from './components/IssuesDashboard';
 import EditAuditForm from './components/EditAuditForm';
 import EditIssueForm from './components/EditIssueForm';
 import RangeAuditDashboard from './components/RangeAuditDashboard';
-import LayeredAuditMatrix from './components/LayeredAuditMatrix'; // <--- Import the matrix component
+
+// We'll remove direct import of LayeredAuditMatrix 
+// import LayeredAuditMatrix from './components/LayeredAuditMatrix'; 
+// Instead import the new page:
+import LayeredMatrixPage from './components/LayeredMatrixPage';
 
 import PrivateRoute from './PrivateRoute';
 import { useAuth } from './contexts/AuthContext';
@@ -39,7 +43,8 @@ function App() {
             <NavLink style={styles.link} to="/dashboard">Dashboard</NavLink>
             <NavLink style={styles.link} to="/audit">Audit Dashboard</NavLink>
             <NavLink style={styles.link} to="/range-audit">Range Audit Dashboard</NavLink>
-            <NavLink style={styles.link} to="/matrix">Matrix</NavLink> {/* <--- New nav link */}
+            {/* We'll point /matrix to the new LayeredMatrixPage */}
+            <NavLink style={styles.link} to="/matrix">Matrix</NavLink>
             <NavLink style={styles.link} to="/daily">Daily Audit</NavLink>
             <NavLink style={styles.link} to="/weekly">Weekly Audit</NavLink>
             <NavLink style={styles.link} to="/monthly">Monthly Audit</NavLink>
@@ -64,7 +69,8 @@ function App() {
           <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
           <Route path="/audit" element={<PrivateRoute><AuditPage /></PrivateRoute>} />
           <Route path="/range-audit" element={<PrivateRoute><RangeAuditDashboard /></PrivateRoute>} />
-          <Route path="/matrix" element={<PrivateRoute><LayeredAuditMatrix /></PrivateRoute>} /> {/* <--- New route */}
+          {/* Instead of LayeredAuditMatrix, we now render the new page */}
+          <Route path="/matrix" element={<PrivateRoute><LayeredMatrixPage /></PrivateRoute>} />
           <Route path="/daily" element={<PrivateRoute><DailyAuditForm /></PrivateRoute>} />
           <Route path="/weekly" element={<PrivateRoute><WeeklyAuditForm /></PrivateRoute>} />
           <Route path="/monthly" element={<PrivateRoute><MonthlyAuditForm /></PrivateRoute>} />

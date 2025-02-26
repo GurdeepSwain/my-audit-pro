@@ -1,7 +1,7 @@
 // src/components/AuditForm.js
 import React, { useState } from 'react';
 import questionsConfig from '../configs/layeredProcessAudit.json';
-import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { addDoc, collection, serverTimestamp, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 import IssueSubForm from './IssueSubForm';
@@ -25,24 +25,16 @@ const AuditForm = ({ auditType }) => {
   // Default subcategory is the first key in the JSON configuration.
   const defaultSubcategory = Object.keys(questionsConfig)[0];
   const [subcategory, setSubcategory] = useState(defaultSubcategory);
-
   // Nested answers: { sectionName: { questionId: (string | { answer, issue }) } }
   const [answers, setAnswers] = useState({});
-
-  // For the date field
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-
   // For daily audits, track time-of-day ("M", "D", "A")
   const [timeOfDay, setTimeOfDay] = useState("M");
-
-  // For weekly audits, track whether it's by Quality Tech or Operations Manager
+  // For weekly audits, track the subtype
   const [weeklySubType, setWeeklySubType] = useState("Quality Tech");
-
-  // UI states
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
-
   const { currentUser } = useAuth();
 
   // The JSON configuration is structured by subcategory and then by section.
@@ -99,7 +91,7 @@ const AuditForm = ({ auditType }) => {
     const computedWeek = computeWeek(date);
 
     // Build the audit data object.
-    const auditData = {
+    const newAuditData = {
       auditType,
       date,
       subcategory,
@@ -118,20 +110,52 @@ const AuditForm = ({ auditType }) => {
       createdAt: serverTimestamp()
     };
 
-    // If daily, store the timeOfDay
     if (auditType === 'daily') {
-      auditData.timeOfDay = timeOfDay;
+      newAuditData.timeOfDay = timeOfDay;
+    }
+    if (auditType === 'weekly') {
+      newAuditData.weeklySubType = weeklySubType; // "Quality Tech" or "Operations Manager"
     }
 
-    // If weekly, store which type of weekly audit it is
-    if (auditType === 'weekly') {
-      auditData.weeklySubType = weeklySubType; // "Quality Tech" or "Operations Manager"
+    // Before submitting, check if an audit already exists with the same parameters.
+    let existingQuery;
+    if (auditType === 'daily') {
+      existingQuery = query(
+        collection(db, 'audits'),
+        where('date', '==', date),
+        where('timeOfDay', '==', timeOfDay),
+        where('subcategory', '==', subcategory),
+        where('auditType', '==', 'daily')
+      );
+    } else if (auditType === 'weekly') {
+      // Check by week, subcategory, auditType and weeklySubType.
+      existingQuery = query(
+        collection(db, 'audits'),
+        where('week', '==', computedWeek),
+        where('subcategory', '==', subcategory),
+        where('auditType', '==', 'weekly'),
+        where('weeklySubType', '==', weeklySubType)
+      );
+    } else if (auditType === 'monthly') {
+      existingQuery = query(
+        collection(db, 'audits'),
+        where('month', '==', computedMonth),
+        where('subcategory', '==', subcategory),
+        where('auditType', '==', 'monthly')
+      );
+    }
+
+    const existingSnap = await getDocs(existingQuery);
+    if (!existingSnap.empty) {
+      setError('An audit already exists for these parameters.');
+      setLoading(false);
+      return;
     }
 
     try {
       // Submit the audit document to Firestore.
-      const auditDocRef = await addDoc(collection(db, 'audits'), auditData);
-      console.log(`Submitted ${auditType} Audit:`, auditData);
+      const auditDocRef = await addDoc(collection(db, 'audits'), newAuditData);
+      console.log(`Submitted ${auditType} Audit:`, newAuditData);
       console.log(`Audit ID: ${auditDocRef.id}`);
 
       // For every question answered as "Not Satisfactory", create an issue document.
@@ -239,13 +263,17 @@ const AuditForm = ({ auditType }) => {
         {Object.entries(sections).map(([sectionName, questions]) => (
           <div key={sectionName} style={{ marginBottom: '20px', padding: '10px', border: '1px solid #ddd' }}>
             <h3>{sectionName}</h3>
-            {questions.map((q) => {
+            {questions.map((q, index) => {
+              // Use the question's id for numbering (or fallback to index + 1)
+              const questionNumber = q.id || index + 1;
               const sectionAnswers = answers[sectionName] || {};
               const currentAnswer = sectionAnswers[q.id];
               const selectedOption = typeof currentAnswer === 'object' ? currentAnswer.answer : currentAnswer || "";
               return (
                 <div key={q.id} style={{ marginBottom: '15px' }}>
-                  <label>{q.question}</label>
+                  <label>
+                    {questionNumber}. {q.question}
+                  </label>
                   {q.type === "radio" && (
                     defaultRadioOptions.map((option) => (
                       <div key={option}>

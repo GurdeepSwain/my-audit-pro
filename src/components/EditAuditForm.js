@@ -11,7 +11,7 @@ import IssueSubForm from './IssueSubForm';
 const defaultRadioOptions = ["Satisfactory", "Not Satisfactory", "Not Applicable"];
 
 // Helper function to compute ISO week (format "YYYY-W##")
-// Basic implementation. For more robust handling, consider using a library.
+// Basic implementation. For more robust handling, consider using a date library.
 const computeWeek = (dateString) => {
   const date = new Date(dateString);
   // Set to nearest Thursday: current date + 4 - current day number (with Sunday as 7)
@@ -270,13 +270,17 @@ const EditAuditForm = () => {
         {Object.entries(sections).map(([sectionName, questions]) => (
           <div key={sectionName} style={{ marginBottom: '20px', padding: '10px', border: '1px solid #ddd' }}>
             <h3>{sectionName}</h3>
-            {questions.map((q) => {
+            {questions.map((q, index) => {
+              // Use the question's id if available; otherwise, fallback to index + 1.
+              const questionNumber = q.id || index + 1;
               const sectionAnswers = auditData.answers?.[sectionName] || {};
               const currentAnswer = sectionAnswers[q.id];
               const selectedOption = typeof currentAnswer === 'object' ? currentAnswer.answer : currentAnswer || "";
               return (
                 <div key={q.id} style={{ marginBottom: '15px' }}>
-                  <label>{q.question}</label>
+                  <label>
+                    {questionNumber}. {q.question}
+                  </label>
                   {q.type === "radio" && (
                     defaultRadioOptions.map((option) => (
                       <div key={option}>
@@ -322,6 +326,7 @@ const EditAuditForm = () => {
             })}
           </div>
         ))}
+
         <button type="submit" disabled={loading}>Update Audit</button>
       </form>
     </div>
