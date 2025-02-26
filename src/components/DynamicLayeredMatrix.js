@@ -290,12 +290,12 @@ function DynamicLayeredMatrix({ selectedWeek, subcategory }) {
   };
 
   return (
-    <div style={{ overflowX: 'auto' }}>
+    <div style={{ overflowX: 'visible', width: '100vh'}}>
       <h3>Layered Process Audit – {subcategory}</h3>
       <p>Week: {selectedWeek}</p>
       {error && <div style={{ color: 'red' }}>{error}</div>}
 
-      <table id="matrixTable" border="1" cellPadding="5" style={{ borderCollapse: 'collapse', minWidth: '1200px' }}>
+      <table className='table table-bordered border-black table-hover'  id="matrixTable" border="1" cellPadding="5" style={{ borderCollapse: 'collapse', minWidth: '1200px' }}>
         <thead>
           <tr>
             <th rowSpan="4" style={{ backgroundColor: '#f0f0f0' }}>Audit Items</th>

@@ -40,9 +40,9 @@ function App() {
       <nav style={styles.nav}>
         {currentUser ? (
           <>
-            <NavLink style={styles.link} to="/dashboard">Dashboard</NavLink>
+            
             <NavLink style={styles.link} to="/audit">Audit Dashboard</NavLink>
-            <NavLink style={styles.link} to="/range-audit">Range Audit Dashboard</NavLink>
+            
             {/* We'll point /matrix to the new LayeredMatrixPage */}
             <NavLink style={styles.link} to="/matrix">Matrix</NavLink>
             <NavLink style={styles.link} to="/daily">Daily Audit</NavLink>
@@ -89,9 +89,10 @@ const styles = {
     padding: '10px',
     backgroundColor: '#f8f9fa',
     display: 'flex',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     gap: '10px',
-    flexWrap: 'wrap'
+    flexWrap: 'wrap',
+    overflowX: 'visible'
   },
   link: {
     textDecoration: 'none',
@@ -99,8 +100,10 @@ const styles = {
   },
   container: {
     padding: '20px',
-    maxWidth: '960px',
-    margin: 'auto'
+    maxWidth: '100vh',
+    margin: 'auto',
+    alignItems: 'center',
+    justifyContent: 'center'
   },
   logoutButton: {
     padding: '5px 10px',

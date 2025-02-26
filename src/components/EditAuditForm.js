@@ -201,7 +201,7 @@ const EditAuditForm = () => {
       await Promise.all(issuePromises);
       
       alert('Audit updated successfully!');
-      navigate('/dashboard');
+      navigate('/audit');
     } catch (err) {
       setError('Error updating audit: ' + err.message);
     }
@@ -283,8 +283,10 @@ const EditAuditForm = () => {
                   </label>
                   {q.type === "radio" && (
                     defaultRadioOptions.map((option) => (
-                      <div key={option}>
+                      <div className="form-check" key={option}>
                         <input
+                          className="form-check-input"
+                          id={`flexRadioDefault~${q.id + option}`}
                           type="radio"
                           name={`section-${sectionName}-question-${q.id}`}
                           value={option}
@@ -292,7 +294,9 @@ const EditAuditForm = () => {
                           onChange={(e) => handleNestedAnswerChange(sectionName, q.id, e.target.value)}
                           required
                         />
+                        <label className="form-check-label" for={`flexRadioDefault~${q.id + option}`}>
                         {option}
+                        </label>
                       </div>
                     ))
                   )}

@@ -118,7 +118,7 @@ const AuditDashboard = ({ selectedDate }) => {
       
       {/* Daily Audits Section */}
       <h3>Daily Audits</h3>
-      <table border="1" cellPadding="8" style={{ width: '100%', borderCollapse: 'collapse' }}>
+      <table className='table table-bordered border-black' border="1" cellPadding="8" style={{ width: '100%', borderCollapse: 'collapse' }}>
         <thead>
           <tr>
             <th>Subcategory</th>
@@ -165,7 +165,7 @@ const AuditDashboard = ({ selectedDate }) => {
       
       {/* Weekly Audits Section */}
       <h3>Weekly Audits</h3>
-      <table border="1" cellPadding="8" style={{ width: '100%', borderCollapse: 'collapse' }}>
+      <table className='table table-bordered border-black' border="1" cellPadding="8" style={{ width: '100%', borderCollapse: 'collapse' }}>
         <thead>
           <tr>
             <th rowSpan="2">Subcategory</th>
@@ -205,7 +205,7 @@ const AuditDashboard = ({ selectedDate }) => {
       
       {/* Monthly Audits Section */}
       <h3>Monthly Audits</h3>
-      <table border="1" cellPadding="8" style={{ width: '100%', borderCollapse: 'collapse' }}>
+      <table className='table table-bordered border-black' border="1" cellPadding="8" style={{ width: '100%', borderCollapse: 'collapse' }}>
         <thead>
           <tr>
             <th>Subcategory</th>

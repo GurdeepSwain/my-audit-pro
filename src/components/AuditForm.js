@@ -1,19 +1,16 @@
-// src/components/AuditForm.js
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import questionsConfig from '../configs/layeredProcessAudit.json';
 import { addDoc, collection, serverTimestamp, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 import IssueSubForm from './IssueSubForm';
 
-// Fixed answer options for every question
 const defaultRadioOptions = ["Satisfactory", "Not Satisfactory", "Not Applicable"];
 
-// Helper function to compute ISO week (format "YYYY-W##")
-// This is a basic implementation. For more robust handling, consider using a library.
+// Simple helper to compute ISO week (YYYY-W##)
 const computeWeek = (dateString) => {
   const date = new Date(dateString);
-  // Set to nearest Thursday: current date + 4 - current day number (treat Sunday as 7)
   const day = date.getDay() === 0 ? 7 : date.getDay();
   date.setDate(date.getDate() + 4 - day);
   const yearStart = new Date(date.getFullYear(), 0, 1);
@@ -22,26 +19,35 @@ const computeWeek = (dateString) => {
 };
 
 const AuditForm = ({ auditType }) => {
-  // Default subcategory is the first key in the JSON configuration.
   const defaultSubcategory = Object.keys(questionsConfig)[0];
   const [subcategory, setSubcategory] = useState(defaultSubcategory);
-  // Nested answers: { sectionName: { questionId: (string | { answer, issue }) } }
   const [answers, setAnswers] = useState({});
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-  // For daily audits, track time-of-day ("M", "D", "A")
   const [timeOfDay, setTimeOfDay] = useState("M");
-  // For weekly audits, track the subtype
   const [weeklySubType, setWeeklySubType] = useState("Quality Tech");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const { currentUser } = useAuth();
+  const navigate = useNavigate();
 
-  // The JSON configuration is structured by subcategory and then by section.
+  // We'll store a ref for each question, so we can scroll if it's missing.
+  const questionRefs = useRef({});
+
+  // We’ll store the first missing question's ID (so we can highlight it).
+  const [missingQuestion, setMissingQuestion] = useState(null);
+
   const sections = questionsConfig[subcategory] || {};
 
-  // When a radio button changes for a given question.
-  // If "Not Satisfactory" is selected, store an object with { answer: "Not Satisfactory", issue: {} }.
+  // For each question, we create or reuse a ref object so we can scroll to it.
+  // We'll call this function in the render loop below.
+  const getQuestionRef = (qId) => {
+    if (!questionRefs.current[qId]) {
+      questionRefs.current[qId] = React.createRef();
+    }
+    return questionRefs.current[qId];
+  };
+
   const handleAnswerChange = (sectionName, questionId, value) => {
     setAnswers(prev => ({
       ...prev,
@@ -54,7 +60,6 @@ const AuditForm = ({ auditType }) => {
     }));
   };
 
-  // When fields in the inline issue subform change.
   const handleIssueChange = (sectionName, questionId, field, fieldValue) => {
     setAnswers(prev => ({
       ...prev,
@@ -71,7 +76,6 @@ const AuditForm = ({ auditType }) => {
     }));
   };
 
-  // Auto-populated data for the issue subform.
   const getAutoData = (sectionName, questionId) => ({
     category: "Layered Process Audit",
     subcategory,
@@ -85,12 +89,47 @@ const AuditForm = ({ auditType }) => {
     setLoading(true);
     setError('');
     setSuccessMessage('');
+    setMissingQuestion(null);
 
-    // Compute additional fields from the date.
-    const computedMonth = date.slice(0, 7); // "YYYY-MM"
+    // Collect all questions
+    const allQuestions = [];
+    for (const [sectionName, questionArray] of Object.entries(sections)) {
+      questionArray.forEach(q => {
+        allQuestions.push({ sectionName, questionId: q.id });
+      });
+    }
+
+    // Validate: find the first question that is unanswered
+    let firstMissing = null;
+    for (const qObj of allQuestions) {
+      const { sectionName, questionId } = qObj;
+      const sectionAnswers = answers[sectionName] || {};
+      const answerVal = sectionAnswers[questionId];
+      if (!answerVal) {
+        firstMissing = { sectionName, questionId };
+        break;
+      }
+    }
+
+    if (firstMissing) {
+      // We found a missing question: highlight + scroll
+      setMissingQuestion(firstMissing.questionId);
+      setError('Please answer all questions before submitting.');
+      // Scroll to that question
+      setTimeout(() => {
+        const ref = questionRefs.current[firstMissing.questionId];
+        if (ref && ref.current) {
+          ref.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 0);
+      setLoading(false);
+      return;
+    }
+
+    // Compute week & month
+    const computedMonth = date.slice(0, 7);
     const computedWeek = computeWeek(date);
 
-    // Build the audit data object.
     const newAuditData = {
       auditType,
       date,
@@ -114,10 +153,10 @@ const AuditForm = ({ auditType }) => {
       newAuditData.timeOfDay = timeOfDay;
     }
     if (auditType === 'weekly') {
-      newAuditData.weeklySubType = weeklySubType; // "Quality Tech" or "Operations Manager"
+      newAuditData.weeklySubType = weeklySubType;
     }
 
-    // Before submitting, check if an audit already exists with the same parameters.
+    // Check for existing audit
     let existingQuery;
     if (auditType === 'daily') {
       existingQuery = query(
@@ -128,7 +167,6 @@ const AuditForm = ({ auditType }) => {
         where('auditType', '==', 'daily')
       );
     } else if (auditType === 'weekly') {
-      // Check by week, subcategory, auditType and weeklySubType.
       existingQuery = query(
         collection(db, 'audits'),
         where('week', '==', computedWeek),
@@ -145,35 +183,33 @@ const AuditForm = ({ auditType }) => {
       );
     }
 
-    const existingSnap = await getDocs(existingQuery);
-    if (!existingSnap.empty) {
-      setError('An audit already exists for these parameters.');
-      setLoading(false);
-      return;
-    }
-
     try {
-      // Submit the audit document to Firestore.
-      const auditDocRef = await addDoc(collection(db, 'audits'), newAuditData);
-      console.log(`Submitted ${auditType} Audit:`, newAuditData);
-      console.log(`Audit ID: ${auditDocRef.id}`);
+      const existingSnap = await getDocs(existingQuery);
+      if (!existingSnap.empty) {
+        setError('An audit already exists for these parameters.');
+        setLoading(false);
+        return;
+      }
 
-      // For every question answered as "Not Satisfactory", create an issue document.
+      // Add the audit doc
+      const auditDocRef = await addDoc(collection(db, 'audits'), newAuditData);
+
+      // For each "Not Satisfactory" => create an issue
       const issuePromises = [];
-      for (const section in answers) {
-        for (const questionId in answers[section]) {
-          const ans = answers[section][questionId];
+      for (const sectionName in answers) {
+        for (const questionId in answers[sectionName]) {
+          const ans = answers[sectionName][questionId];
           if (typeof ans === 'object' && ans.answer === "Not Satisfactory") {
             const issueData = {
               category: "Layered Process Audit",
               subcategory,
-              section,
+              section: sectionName,
               item: questionId,
               date,
               week: computedWeek,
               month: computedMonth,
               ...ans.issue,
-              status: "Open", // default status
+              status: "Open",
               createdBy: {
                 uid: currentUser.uid,
                 email: currentUser.email
@@ -186,13 +222,14 @@ const AuditForm = ({ auditType }) => {
         }
       }
       await Promise.all(issuePromises);
-      setSuccessMessage('Audit and related issues submitted successfully!');
-      // Optionally, reset the form.
-      setAnswers({});
+
+      alert('Audit completed successfully!');
+      navigate('/audit');
     } catch (err) {
       console.error('Error submitting audit or issues:', err);
       setError('Error submitting audit: ' + err.message);
     }
+
     setLoading(false);
   };
 
@@ -214,7 +251,6 @@ const AuditForm = ({ auditType }) => {
           />
         </div>
         
-        {/* Time of Day for Daily Audits */}
         {auditType === 'daily' && (
           <div style={{ marginBottom: '10px' }}>
             <label>Time of Day: </label>
@@ -230,7 +266,6 @@ const AuditForm = ({ auditType }) => {
           </div>
         )}
 
-        {/* Weekly Sub-Type for Weekly Audits */}
         {auditType === 'weekly' && (
           <div style={{ marginBottom: '10px' }}>
             <label>Weekly Audit By: </label>
@@ -245,7 +280,6 @@ const AuditForm = ({ auditType }) => {
           </div>
         )}
 
-        {/* Subcategory */}
         <div style={{ marginBottom: '10px' }}>
           <label>Subcategory: </label>
           <select 
@@ -259,25 +293,41 @@ const AuditForm = ({ auditType }) => {
           </select>
         </div>
         
-        {/* Render questions grouped by section */}
         {Object.entries(sections).map(([sectionName, questions]) => (
           <div key={sectionName} style={{ marginBottom: '20px', padding: '10px', border: '1px solid #ddd' }}>
             <h3>{sectionName}</h3>
             {questions.map((q, index) => {
-              // Use the question's id for numbering (or fallback to index + 1)
               const questionNumber = q.id || index + 1;
               const sectionAnswers = answers[sectionName] || {};
               const currentAnswer = sectionAnswers[q.id];
               const selectedOption = typeof currentAnswer === 'object' ? currentAnswer.answer : currentAnswer || "";
+
+              // We'll get a ref for this question
+              const qRef = getQuestionRef(q.id);
+
+              // If this question is the missing question, we'll highlight it.
+              const isMissing = missingQuestion === q.id;
+
               return (
-                <div key={q.id} style={{ marginBottom: '15px' }}>
+                <div
+                  key={q.id}
+                  ref={qRef}
+                  style={{
+                    marginBottom: '15px',
+                    // highlight if missing
+                    backgroundColor: isMissing ? 'rgba(255, 0, 0, 0.1)' : 'transparent',
+                    padding: isMissing ? '8px' : '0'
+                  }}
+                >
                   <label>
                     {questionNumber}. {q.question}
                   </label>
                   {q.type === "radio" && (
                     defaultRadioOptions.map((option) => (
-                      <div key={option}>
+                      <div className="form-check" key={option}>
                         <input
+                          className="form-check-input"
+                          id={`flexRadioDefault~${q.id + option}`}
                           type="radio"
                           name={`section-${sectionName}-question-${q.id}`}
                           value={option}
@@ -285,7 +335,12 @@ const AuditForm = ({ auditType }) => {
                           onChange={(e) => handleAnswerChange(sectionName, q.id, e.target.value)}
                           required
                         />
-                        {option}
+                        <label
+                          className="form-check-label"
+                          htmlFor={`flexRadioDefault~${q.id + option}`}
+                        >
+                          {option}
+                        </label>
                       </div>
                     ))
                   )}
@@ -304,7 +359,6 @@ const AuditForm = ({ auditType }) => {
                       required
                     />
                   )}
-                  {/* Render the IssueSubForm if "Not Satisfactory" is selected */}
                   {selectedOption === "Not Satisfactory" && (
                     <IssueSubForm 
                       autoData={getAutoData(sectionName, q.id)}

@@ -34,7 +34,7 @@ const IssuesDashboard = () => {
   return (
     <div style={{ maxWidth: '1000px', margin: 'auto', padding: '20px' }}>
       <h2>Issues Dashboard</h2>
-      <table border="1" cellPadding="8" style={{ width: '100%', borderCollapse: 'collapse' }}>
+      <table className='table table-bordered border-black table-hover' border="1" cellPadding="8" style={{ width: '100%', borderCollapse: 'collapse' }}>
         <thead>
           <tr>
             <th>Category</th>

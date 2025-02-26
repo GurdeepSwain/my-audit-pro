@@ -17,7 +17,7 @@ const Register = () => {
       // Register the user with Firebase Authentication
       await createUserWithEmailAndPassword(auth, email, password);
       // Redirect to the dashboard or home page after successful registration
-      navigate('/dashboard');
+      navigate('/audit');
     } catch (err) {
       // Set error state to display error message to the user
       setError(err.message);
