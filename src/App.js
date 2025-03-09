@@ -89,7 +89,7 @@ const styles = {
     padding: '10px',
     backgroundColor: '#f8f9fa',
     display: 'flex',
-    justifyContent: 'flex-start',
+    justifyContent: 'center',
     gap: '10px',
     flexWrap: 'wrap',
     overflowX: 'visible'

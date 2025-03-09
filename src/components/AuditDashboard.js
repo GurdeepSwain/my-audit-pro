@@ -10,13 +10,20 @@ const subcategories = ["FIP 1", "FIP 2", "Conventional"];
 // Helper function to compute ISO week (format "YYYY-W##")
 // This is a basic implementation. For more robust handling, consider using a library like date-fns.
 const computeWeek = (dateString) => {
-  const date = new Date(dateString);
+  const date = new Date(dateString + "T00:00:00");
   // Set to nearest Thursday: current date + 4 - current day number (with Sunday as 7)
   const day = date.getDay() === 0 ? 7 : date.getDay();
   date.setDate(date.getDate() + 4 - day);
   const yearStart = new Date(date.getFullYear(), 0, 1);
   const weekNo = Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
   return `${date.getFullYear()}-W${weekNo.toString().padStart(2, '0')}`;
+};
+
+// Helper function to format Firestore timestamp (assumed to have .seconds) into a time string.
+const formatTime = (timestamp) => {
+  if (!timestamp || !timestamp.seconds) return "";
+  const date = new Date(timestamp.seconds * 1000);
+  return date.toLocaleTimeString();
 };
 
 const AuditDashboard = ({ selectedDate }) => {
@@ -75,7 +82,7 @@ const AuditDashboard = ({ selectedDate }) => {
   const weeklyStatus = {};
   const monthlyStatus = {};
 
-  // Initialize daily and monthly statuses as before.
+  // Initialize status objects.
   subcategories.forEach(subcat => {
     dailyStatus[subcat] = { M: null, D: null, A: null };
     monthlyStatus[subcat] = null;
@@ -88,17 +95,16 @@ const AuditDashboard = ({ selectedDate }) => {
 
   // Process each fetched audit document.
   audits.forEach(audit => {
-    const { auditType, subcategory, timeOfDay, createdBy, lastEditedBy, weeklySubType } = audit;
+    const { auditType, subcategory, timeOfDay, createdBy, lastEditedBy, createdAt, weeklySubType } = audit;
     if (!subcategories.includes(subcategory)) return; // Skip if subcategory is not defined
 
-    const auditInfo = { id: audit.id, createdBy, lastEditedBy };
+    const auditInfo = { id: audit.id, createdBy, lastEditedBy, createdAt };
 
     if (auditType === 'daily') {
       if (timeOfDay && !dailyStatus[subcategory][timeOfDay]) {
         dailyStatus[subcategory][timeOfDay] = auditInfo;
       }
     } else if (auditType === 'weekly') {
-      // Use weeklySubType to differentiate the two types of weekly audits.
       if (weeklySubType === "Quality Tech" && !weeklyStatus[subcategory]["Quality Tech"]) {
         weeklyStatus[subcategory]["Quality Tech"] = auditInfo;
       } else if (weeklySubType === "Operations Manager" && !weeklyStatus[subcategory]["Operations Manager"]) {
@@ -136,6 +142,7 @@ const AuditDashboard = ({ selectedDate }) => {
                   <>
                     Completed by: {dailyStatus[subcat].M.createdBy.email}<br />
                     Last Edited: {dailyStatus[subcat].M.lastEditedBy.email}<br />
+                    Created at: {formatTime(dailyStatus[subcat].M.createdAt)}<br />
                     <NavLink to={`/edit-audit/${dailyStatus[subcat].M.id}`}>Edit</NavLink>
                   </>
                 ) : "Pending"}
@@ -145,6 +152,7 @@ const AuditDashboard = ({ selectedDate }) => {
                   <>
                     Completed by: {dailyStatus[subcat].D.createdBy.email}<br />
                     Last Edited: {dailyStatus[subcat].D.lastEditedBy.email}<br />
+                    Created at: {formatTime(dailyStatus[subcat].D.createdAt)}<br />
                     <NavLink to={`/edit-audit/${dailyStatus[subcat].D.id}`}>Edit</NavLink>
                   </>
                 ) : "Pending"}
@@ -154,6 +162,7 @@ const AuditDashboard = ({ selectedDate }) => {
                   <>
                     Completed by: {dailyStatus[subcat].A.createdBy.email}<br />
                     Last Edited: {dailyStatus[subcat].A.lastEditedBy.email}<br />
+                    Created at: {formatTime(dailyStatus[subcat].A.createdAt)}<br />
                     <NavLink to={`/edit-audit/${dailyStatus[subcat].A.id}`}>Edit</NavLink>
                   </>
                 ) : "Pending"}
@@ -185,6 +194,7 @@ const AuditDashboard = ({ selectedDate }) => {
                   <>
                     Completed by: {weeklyStatus[subcat]["Quality Tech"].createdBy.email}<br />
                     Last Edited: {weeklyStatus[subcat]["Quality Tech"].lastEditedBy.email}<br />
+                    Created at: {formatTime(weeklyStatus[subcat]["Quality Tech"].createdAt)}<br />
                     <NavLink to={`/edit-audit/${weeklyStatus[subcat]["Quality Tech"].id}`}>Edit</NavLink>
                   </>
                 ) : "Pending"}
@@ -194,6 +204,7 @@ const AuditDashboard = ({ selectedDate }) => {
                   <>
                     Completed by: {weeklyStatus[subcat]["Operations Manager"].createdBy.email}<br />
                     Last Edited: {weeklyStatus[subcat]["Operations Manager"].lastEditedBy.email}<br />
+                    Created at: {formatTime(weeklyStatus[subcat]["Operations Manager"].createdAt)}<br />
                     <NavLink to={`/edit-audit/${weeklyStatus[subcat]["Operations Manager"].id}`}>Edit</NavLink>
                   </>
                 ) : "Pending"}
@@ -223,6 +234,7 @@ const AuditDashboard = ({ selectedDate }) => {
                   <>
                     Completed by: {monthlyStatus[subcat].createdBy.email}<br />
                     Last Edited: {monthlyStatus[subcat].lastEditedBy.email}<br />
+                    Created at: {formatTime(monthlyStatus[subcat].createdAt)}<br />
                     <NavLink to={`/edit-audit/${monthlyStatus[subcat].id}`}>Edit</NavLink>
                   </>
                 )}
