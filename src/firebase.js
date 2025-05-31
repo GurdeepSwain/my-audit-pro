@@ -6,18 +6,18 @@ import { getAnalytics } from "firebase/analytics";
 
 // Replace the following config object with your Firebase project configuration
 const firebaseConfig = {
-    apiKey: "AIzaSyBKmWUeAGUltwOK90ZWvrpZquey7EhDSCc",
-    authDomain: "my-audit-pro.firebaseapp.com",
-    projectId: "my-audit-pro",
-    storageBucket: "my-audit-pro.firebasestorage.app",
-    messagingSenderId: "814649704328",
-    appId: "1:814649704328:web:6bd654421d22f3952d043d",
-    measurementId: "G-T8LFKM8MM3"
-  };
+  apiKey: "AIzaSyDUPtMLi4Gw7oYk5ptmujmJHi_zTsyA9Zc",
+  authDomain: "wfc-audit-pro.firebaseapp.com",
+  projectId: "wfc-audit-pro",
+  storageBucket: "wfc-audit-pro.firebasestorage.app",
+  messagingSenderId: "573784566982",
+  appId: "1:573784566982:web:ff30a88b6d3828c495bbc7"
+};
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const analytics = getAnalytics(app);
 const auth = getAuth(app);
+
 
 // Set persistence to session only.
 setPersistence(auth, browserSessionPersistence)
@@ -31,5 +31,6 @@ setPersistence(auth, browserSessionPersistence)
 // Export the Firebase services you plan to use
 export const db = getFirestore(app);
 export {auth};
+export const firestore = getFirestore(app);
 
 

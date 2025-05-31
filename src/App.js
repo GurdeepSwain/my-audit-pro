@@ -13,6 +13,9 @@ import IssuesDashboard from './components/IssuesDashboard';
 import EditAuditForm from './components/EditAuditForm';
 import EditIssueForm from './components/EditIssueForm';
 import RangeAuditDashboard from './components/RangeAuditDashboard';
+import RequireAdmin from './components/RequireAdmin';
+import AdminDashboard from './components/AdminDashboard';
+import AdminConfig from './components/AdminConfig';
 
 // We'll remove direct import of LayeredAuditMatrix 
 // import LayeredAuditMatrix from './components/LayeredAuditMatrix'; 
@@ -25,7 +28,7 @@ import { auth } from './firebase';
 import { signOut } from 'firebase/auth';
 
 function App() {
-  const { currentUser } = useAuth();
+  const { currentUser, userRole, loadingRole } = useAuth();
 
   const handleLogout = async () => {
     try {
@@ -40,6 +43,12 @@ function App() {
       <nav style={styles.nav}>
         {currentUser ? (
           <>
+            {currentUser && userRole === 'admin' && (
+              <>
+              <NavLink style={styles.link} to="/admin">Admin</NavLink>
+              <NavLink style={styles.link} to="/admin/config">Audit Config</NavLink>
+              </>
+            )}
             
             <NavLink style={styles.link} to="/audit">Audit Dashboard</NavLink>
             
@@ -65,6 +74,26 @@ function App() {
           <Route path="/" element={<LoginScreen />} />
           <Route path="/register" element={<Register />} />
 
+          <Route
+            path="/admin"
+            element={
+              <PrivateRoute>
+                <RequireAdmin>
+                  <AdminDashboard />
+                </RequireAdmin>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/admin/config"
+            element={
+              <PrivateRoute>
+                <RequireAdmin>
+                  <AdminConfig />
+                </RequireAdmin>
+              </PrivateRoute>
+            }
+          />
           {/* Protected Routes */}
           <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
           <Route path="/audit" element={<PrivateRoute><AuditPage /></PrivateRoute>} />

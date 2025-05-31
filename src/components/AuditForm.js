@@ -1,233 +1,234 @@
-import React, { useState, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import questionsConfig from '../configs/layeredProcessAudit.json';
-import { addDoc, collection, serverTimestamp, query, where, getDocs } from 'firebase/firestore';
+// src/components/AuditForm.js
+import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+import {
+  addDoc,
+  collection,
+  serverTimestamp,
+  query,
+  where,
+  getDocs,
+  orderBy
+} from 'firebase/firestore';
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 import IssueSubForm from './IssueSubForm';
 
-const defaultRadioOptions = ["Satisfactory", "Not Satisfactory", "Not Applicable"];
+const defaultRadioOptions = [
+  "Satisfactory",
+  "Not Satisfactory",
+  "Not Applicable"
+];
+const CATEGORY_ID = 'nyz4qcXPvxPjwch0zTmM'; // ← replace with your doc ID
 
-// Simple helper to compute ISO week (YYYY-W##)
-const computeWeek = (dateString) => {
+function computeWeek(dateString) {
   const date = new Date(dateString);
   const day = date.getDay() === 0 ? 7 : date.getDay();
   date.setDate(date.getDate() + 4 - day);
   const yearStart = new Date(date.getFullYear(), 0, 1);
   const weekNo = Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
   return `${date.getFullYear()}-W${weekNo.toString().padStart(2, '0')}`;
-};
+}
 
-const AuditForm = ({ auditType }) => {
-  const defaultSubcategory = Object.keys(questionsConfig)[0];
-  const [subcategory, setSubcategory] = useState(defaultSubcategory);
-  const [answers, setAnswers] = useState({});
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-  const [timeOfDay, setTimeOfDay] = useState("M");
-  const [weeklySubType, setWeeklySubType] = useState("Quality Tech");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [successMessage, setSuccessMessage] = useState('');
+export default function AuditForm({ auditType }) {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
 
-  // We'll store a ref for each question, so we can scroll if it's missing.
+  const [subcategories, setSubcategories] = useState([]);
+  const [subcategory,  setSubcategory]  = useState('');
+  const [questions,    setQuestions]    = useState([]);
+  const [answers,      setAnswers]      = useState({});
+  const [date,         setDate]         = useState(new Date().toISOString().split('T')[0]);
+  const [timeOfDay,    setTimeOfDay]    = useState('M');
+  const [weeklySubType,setWeeklySubType]= useState('Quality Tech');
+  const [loading,      setLoading]      = useState(false);
+  const [error,        setError]        = useState('');
+  const [successMsg,   setSuccessMsg]   = useState('');
+
   const questionRefs = useRef({});
+  const [missingQ,    setMissingQ]     = useState(null);
 
-  // We’ll store the first missing question's ID (so we can highlight it).
-  const [missingQuestion, setMissingQuestion] = useState(null);
+  function getQuestionRef(id) {
+    if (!questionRefs.current[id]) questionRefs.current[id] = React.createRef();
+    return questionRefs.current[id];
+  }
 
-  const sections = questionsConfig[subcategory] || {};
+  // Load subcategories on mount
+  useEffect(() => {
+    (async () => {
+      const q = query(
+        collection(db, 'auditCategories', CATEGORY_ID, 'subcategories'),
+        orderBy('order', 'asc')
+      );
+      const snap = await getDocs(q);
+      const subs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      setSubcategories(subs);
+      if (subs.length) setSubcategory(subs[0].id);
+    })();
+  }, []);
 
-  // For each question, we create or reuse a ref object so we can scroll to it.
-  // We'll call this function in the render loop below.
-  const getQuestionRef = (qId) => {
-    if (!questionRefs.current[qId]) {
-      questionRefs.current[qId] = React.createRef();
-    }
-    return questionRefs.current[qId];
-  };
+  // Load questions whenever subcategory changes
+  useEffect(() => {
+    if (!subcategory) return;
+    (async () => {
+      const q = query(
+        collection(
+          db,
+          'auditCategories',
+          CATEGORY_ID,
+          'subcategories',
+          subcategory,
+          'questions'
+        ),
+        orderBy('order', 'asc')
+      );
+      const snap = await getDocs(q);
+      setQuestions(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    })();
+  }, [subcategory]);
 
-  const handleAnswerChange = (sectionName, questionId, value) => {
+  // Handle answer selection
+  function handleAnswerChange(qId, val) {
     setAnswers(prev => ({
       ...prev,
-      [sectionName]: {
-        ...prev[sectionName],
-        [questionId]: value === "Not Satisfactory"
-          ? { answer: "Not Satisfactory", issue: {} }
-          : value
-      }
+      [qId]: val === 'Not Satisfactory'
+        ? { answer: 'Not Satisfactory', issue: prev[qId]?.issue || {} }
+        : val
     }));
-  };
-
-  const handleIssueChange = (sectionName, questionId, field, fieldValue) => {
+  }
+  // Handle issue subform changes
+  function handleIssueChange(qId, field, val) {
     setAnswers(prev => ({
       ...prev,
-      [sectionName]: {
-        ...prev[sectionName],
-        [questionId]: {
-          ...prev[sectionName][questionId],
-          issue: {
-            ...prev[sectionName][questionId].issue,
-            [field]: fieldValue
-          }
+      [qId]: {
+        ...prev[qId],
+        issue: {
+          ...prev[qId].issue,
+          [field]: val
         }
       }
     }));
-  };
+  }
 
-  const getAutoData = (sectionName, questionId) => ({
-    category: "Layered Process Audit",
-    subcategory,
-    section: sectionName,
-    item: questionId,
-    date
-  });
+  // Ensure every question has an answer
+  function validateAll() {
+    return questions.find(q => !answers[q.id])?.id || null;
+  }
 
+  // Submit handler with popups
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
-    setSuccessMessage('');
-    setMissingQuestion(null);
+    setError(''); setSuccessMsg(''); setMissingQ(null);
 
-    // Collect all questions
-    const allQuestions = [];
-    for (const [sectionName, questionArray] of Object.entries(sections)) {
-      questionArray.forEach(q => {
-        allQuestions.push({ sectionName, questionId: q.id });
-      });
-    }
-
-    // Validate: find the first question that is unanswered
-    let firstMissing = null;
-    for (const qObj of allQuestions) {
-      const { sectionName, questionId } = qObj;
-      const sectionAnswers = answers[sectionName] || {};
-      const answerVal = sectionAnswers[questionId];
-      if (!answerVal) {
-        firstMissing = { sectionName, questionId };
-        break;
-      }
-    }
-
-    if (firstMissing) {
-      // We found a missing question: highlight + scroll
-      setMissingQuestion(firstMissing.questionId);
-      setError('Please answer all questions before submitting.');
-      // Scroll to that question
-      setTimeout(() => {
-        const ref = questionRefs.current[firstMissing.questionId];
-        if (ref && ref.current) {
-          ref.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-      }, 0);
+    // Validate
+    const miss = validateAll();
+    if (miss) {
+      setMissingQ(miss);
+      window.alert('Please answer all questions before submitting.');
       setLoading(false);
       return;
     }
 
-    // Compute week & month
-    const computedMonth = date.slice(0, 7);
-    const computedWeek = computeWeek(date);
+    // Compute month/week
+    const month = date.slice(0,7);
+    const week  = computeWeek(date);
 
-    const newAuditData = {
+    // Snapshot question metadata so historical audits stay frozen
+    const configSnapshot = questions.map(q => ({
+      id:      q.id,
+      text:    q.text,
+      type:    q.type,
+      options: q.options || [],
+      order:   q.order
+    }));
+    const chosenSub = subcategories.find(sc => sc.id === subcategory)
+
+    // Build payload
+    const payload = {
       auditType,
       date,
+      month,
+      week,
       subcategory,
-      week: computedWeek,
-      month: computedMonth,
+      subcategoryName: chosenSub?.name || subcategory,
+      config:      configSnapshot,
       answers,
-      completed: true,
-      createdBy: {
-        uid: currentUser.uid,
-        email: currentUser.email
-      },
-      lastEditedBy: {
-        uid: currentUser.uid,
-        email: currentUser.email
-      },
-      createdAt: serverTimestamp()
+      completed:   true,
+      createdBy:   { uid: currentUser.uid, email: currentUser.email },
+      lastEditedBy:{ uid: currentUser.uid, email: currentUser.email },
+      createdAt:   serverTimestamp()
     };
+    if (auditType === 'daily')   payload.timeOfDay    = timeOfDay;
+    if (auditType === 'weekly')  payload.weeklySubType = weeklySubType;
 
+    // Check duplicates
+    let dupQuery;
     if (auditType === 'daily') {
-      newAuditData.timeOfDay = timeOfDay;
-    }
-    if (auditType === 'weekly') {
-      newAuditData.weeklySubType = weeklySubType;
-    }
-
-    // Check for existing audit
-    let existingQuery;
-    if (auditType === 'daily') {
-      existingQuery = query(
-        collection(db, 'audits'),
-        where('date', '==', date),
-        where('timeOfDay', '==', timeOfDay),
-        where('subcategory', '==', subcategory),
-        where('auditType', '==', 'daily')
+      dupQuery = query(
+        collection(db,'audits'),
+        where('auditType','==','daily'),
+        where('date','==',date),
+        where('timeOfDay','==',timeOfDay),
+        where('subcategory','==',subcategory)
       );
     } else if (auditType === 'weekly') {
-      existingQuery = query(
-        collection(db, 'audits'),
-        where('week', '==', computedWeek),
-        where('subcategory', '==', subcategory),
-        where('auditType', '==', 'weekly'),
-        where('weeklySubType', '==', weeklySubType)
+      dupQuery = query(
+        collection(db,'audits'),
+        where('auditType','==','weekly'),
+        where('week','==',week),
+        where('weeklySubType','==',weeklySubType),
+        where('subcategory','==',subcategory)
       );
-    } else if (auditType === 'monthly') {
-      existingQuery = query(
-        collection(db, 'audits'),
-        where('month', '==', computedMonth),
-        where('subcategory', '==', subcategory),
-        where('auditType', '==', 'monthly')
+    } else {
+      dupQuery = query(
+        collection(db,'audits'),
+        where('auditType','==','monthly'),
+        where('month','==',month),
+        where('subcategory','==',subcategory)
       );
     }
+    const dupSnap = await getDocs(dupQuery);
+    if (!dupSnap.empty) {
+      window.alert('An audit already exists for these parameters.');
+      setLoading(false);
+      return;
+    }
 
+    // Try submitting
     try {
-      const existingSnap = await getDocs(existingQuery);
-      if (!existingSnap.empty) {
-        setError('An audit already exists for these parameters.');
-        setLoading(false);
-        return;
-      }
+      const docRef = await addDoc(collection(db,'audits'), payload);
 
-      // Add the audit doc
-      const auditDocRef = await addDoc(collection(db, 'audits'), newAuditData);
-
-      // For each "Not Satisfactory" => create an issue
+      // Create any issues
       const issuePromises = [];
-      for (const sectionName in answers) {
-        for (const questionId in answers[sectionName]) {
-          const ans = answers[sectionName][questionId];
-          if (typeof ans === 'object' && ans.answer === "Not Satisfactory") {
-            const issueData = {
-              category: "Layered Process Audit",
+      questions.forEach(q => {
+        const ans = answers[q.id];
+        if (typeof ans === 'object' && ans.answer === 'Not Satisfactory') {
+          issuePromises.push(
+            addDoc(collection(db,'issues'), {
+              category:   'Layered Process Audit',
               subcategory,
-              section: sectionName,
-              item: questionId,
+              subcategoryName: chosenSub?.name || subcategory,
+              item:       q.id,
               date,
-              week: computedWeek,
-              month: computedMonth,
+              week,
+              month,
               ...ans.issue,
-              status: "Open",
-              createdBy: {
-                uid: currentUser.uid,
-                email: currentUser.email
-              },
+              status:    'Open',
+              createdBy: { uid: currentUser.uid, email: currentUser.email },
               createdAt: serverTimestamp(),
-              linkedAuditId: auditDocRef.id
-            };
-            issuePromises.push(addDoc(collection(db, 'issues'), issueData));
-          }
+              linkedAuditId: docRef.id
+            })
+          );
         }
-      }
+      });
       await Promise.all(issuePromises);
 
-      alert('Audit completed successfully!');
+      window.alert('Audit and related issues submitted successfully!');
       navigate('/audit');
     } catch (err) {
-      console.error('Error submitting audit or issues:', err);
-      setError('Error submitting audit: ' + err.message);
+      console.error(err);
+      window.alert('Error submitting audit: ' + err.message);
     }
 
     setLoading(false);
@@ -235,43 +236,42 @@ const AuditForm = ({ auditType }) => {
 
   return (
     <div>
-      <h2>{auditType.charAt(0).toUpperCase() + auditType.slice(1)} Audit Form</h2>
+      <h2>
+        {auditType.charAt(0).toUpperCase() + auditType.slice(1)} Audit Form
+      </h2>
       <form onSubmit={handleSubmit}>
-        {error && <p style={{ color: 'red' }}>{error}</p>}
-        {successMessage && <p style={{ color: 'green' }}>{successMessage}</p>}
-        
         {/* Date */}
-        <div style={{ marginBottom: '10px' }}>
+        <div style={{ marginBottom: 10 }}>
           <label>Date: </label>
-          <input 
-            type="date" 
-            value={date} 
-            onChange={(e) => setDate(e.target.value)}
+          <input
+            type="date"
+            value={date}
+            onChange={e => setDate(e.target.value)}
             required
           />
         </div>
-        
+
+        {/* Daily / Weekly controls */}
         {auditType === 'daily' && (
-          <div style={{ marginBottom: '10px' }}>
+          <div style={{ marginBottom: 10 }}>
             <label>Time of Day: </label>
-            <select 
-              value={timeOfDay} 
-              onChange={(e) => setTimeOfDay(e.target.value)}
+            <select
+              value={timeOfDay}
+              onChange={e => setTimeOfDay(e.target.value)}
               required
             >
-              <option value="M">Morning (M)</option>
-              <option value="D">Day (D)</option>
-              <option value="A">Afternoon (A)</option>
+              <option value="M">Morning</option>
+              <option value="D">Day</option>
+              <option value="A">Afternoon</option>
             </select>
           </div>
         )}
-
         {auditType === 'weekly' && (
-          <div style={{ marginBottom: '10px' }}>
+          <div style={{ marginBottom: 10 }}>
             <label>Weekly Audit By: </label>
-            <select 
-              value={weeklySubType} 
-              onChange={(e) => setWeeklySubType(e.target.value)}
+            <select
+              value={weeklySubType}
+              onChange={e => setWeeklySubType(e.target.value)}
               required
             >
               <option value="Quality Tech">Quality Tech</option>
@@ -280,104 +280,93 @@ const AuditForm = ({ auditType }) => {
           </div>
         )}
 
-        <div style={{ marginBottom: '10px' }}>
+        {/* Subcategory selector */}
+        <div style={{ marginBottom: 10 }}>
           <label>Subcategory: </label>
-          <select 
-            value={subcategory} 
-            onChange={(e) => setSubcategory(e.target.value)}
+          <select
+            value={subcategory}
+            onChange={e => setSubcategory(e.target.value)}
             required
           >
-            {Object.keys(questionsConfig).map((key) => (
-              <option key={key} value={key}>{key}</option>
+            {subcategories.map(sc => (
+              <option key={sc.id} value={sc.id}>{sc.name}</option>
             ))}
           </select>
         </div>
-        
-        {Object.entries(sections).map(([sectionName, questions]) => (
-          <div key={sectionName} style={{ marginBottom: '20px', padding: '10px', border: '1px solid #ddd' }}>
-            <h3>{sectionName}</h3>
-            {questions.map((q, index) => {
-              const questionNumber = q.id || index + 1;
-              const sectionAnswers = answers[sectionName] || {};
-              const currentAnswer = sectionAnswers[q.id];
-              const selectedOption = typeof currentAnswer === 'object' ? currentAnswer.answer : currentAnswer || "";
 
-              // We'll get a ref for this question
-              const qRef = getQuestionRef(q.id);
+        {/* Questions */}
+        {questions.map((q, idx) => {
+          const ref       = getQuestionRef(q.id);
+          const isMissing = missingQ === q.id;
+          const ans       = answers[q.id];
+          const selected  = typeof ans === 'object' ? ans.answer : ans || '';
 
-              // If this question is the missing question, we'll highlight it.
-              const isMissing = missingQuestion === q.id;
+          return (
+            <div
+              key={q.id}
+              ref={ref}
+              style={{
+                marginBottom: 15,
+                padding: isMissing ? 8 : 0,
+                background: isMissing ? 'rgba(255,0,0,0.1)' : 'transparent'
+              }}
+            >
+              <label>
+                {idx + 1}. {q.text}
+              </label>
 
-              return (
-                <div
-                  key={q.id}
-                  ref={qRef}
-                  style={{
-                    marginBottom: '15px',
-                    // highlight if missing
-                    backgroundColor: isMissing ? 'rgba(255, 0, 0, 0.1)' : 'transparent',
-                    padding: isMissing ? '8px' : '0'
-                  }}
-                >
-                  <label>
-                    {questionNumber}. {q.question}
-                  </label>
-                  {q.type === "radio" && (
-                    defaultRadioOptions.map((option) => (
-                      <div className="form-check" key={option}>
-                        <input
-                          className="form-check-input"
-                          id={`flexRadioDefault~${q.id + option}`}
-                          type="radio"
-                          name={`section-${sectionName}-question-${q.id}`}
-                          value={option}
-                          checked={selectedOption === option}
-                          onChange={(e) => handleAnswerChange(sectionName, q.id, e.target.value)}
-                          required
-                        />
-                        <label
-                          className="form-check-label"
-                          htmlFor={`flexRadioDefault~${q.id + option}`}
-                        >
-                          {option}
-                        </label>
-                      </div>
-                    ))
-                  )}
-                  {q.type === "number" && (
+              {q.type === 'radio' &&
+                defaultRadioOptions.map(opt => (
+                  <div key={opt}>
                     <input
-                      type="number"
-                      name={`section-${sectionName}-question-${q.id}`}
-                      onChange={(e) => handleAnswerChange(sectionName, q.id, e.target.value)}
+                      type="radio"
+                      name={`q-${q.id}`}
+                      value={opt}
+                      checked={selected === opt}
+                      onChange={() => handleAnswerChange(q.id, opt)}
                       required
                     />
-                  )}
-                  {q.type === "textarea" && (
-                    <textarea
-                      name={`section-${sectionName}-question-${q.id}`}
-                      onChange={(e) => handleAnswerChange(sectionName, q.id, e.target.value)}
-                      required
-                    />
-                  )}
-                  {selectedOption === "Not Satisfactory" && (
-                    <IssueSubForm 
-                      autoData={getAutoData(sectionName, q.id)}
-                      issueData={typeof currentAnswer === 'object' ? currentAnswer.issue : {}}
-                      onIssueChange={(field, value) => handleIssueChange(sectionName, q.id, field, value)}
-                    />
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        ))}
+                    <span style={{ marginLeft: 4 }}>{opt}</span>
+                  </div>
+                ))}
+
+              {q.type === 'number' && (
+                <input
+                  type="number"
+                  value={selected}
+                  onChange={e => handleAnswerChange(q.id, e.target.value)}
+                  required
+                />
+              )}
+
+              {q.type === 'textarea' && (
+                <textarea
+                  value={selected}
+                  onChange={e => handleAnswerChange(q.id, e.target.value)}
+                  required
+                />
+              )}
+
+              {selected === 'Not Satisfactory' && (
+                <IssueSubForm
+                  autoData={{
+                    category:   'Layered Process Audit',
+                    subcategory,
+                    item:       q.id,
+                    date
+                  }}
+                  issueData={ans?.issue || {}}
+                  onIssueChange={(field, val) => handleIssueChange(q.id, field, val)}
+                />
+              )}
+            </div>
+          );
+        })}
 
         <button type="submit" disabled={loading}>
-          {loading ? 'Submitting...' : `Submit ${auditType.charAt(0).toUpperCase() + auditType.slice(1)} Audit`}
+          {loading ? 'Submitting…' : `Submit ${auditType.charAt(0).toUpperCase() + auditType.slice(1)} Audit`}
         </button>
       </form>
     </div>
   );
-};
-
-export default AuditForm;
+}
