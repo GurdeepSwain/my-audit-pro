@@ -1,0 +1,333 @@
+{
+    "Conventional": {
+      "Section 1": [
+        {
+          "id": 1,
+          "question": "Are all Quality Standards present for parts that are running",
+          "type": "radio",
+          "options": ["Satisfactory", "Not Satisfactory", "Not Applicable"]
+        },
+        {
+          "id": 2,
+          "question": "Are all Pack Standards present for parts that are running",
+          "type": "radio",
+          "options": ["Satisfactory", "Not Satisfactory", "Not Applicable"]
+        },
+        {
+          "id": 3,
+          "question": "Are work stations neat clean and orderly (5S)",
+          "type": "radio",
+          "options": ["Satisfactory", "Not Satisfactory", "Not Applicable"]
+        },
+        {
+          "id": 4,
+          "question": "JL - 13001 LH/RH Clip Poke Yoke Station 2 - use Red Rabbit",
+          "type": "radio",
+          "options": ["Satisfactory", "Not Satisfactory", "Not Applicable"]
+        },
+        {
+          "id": 5,
+          "question": "JL - 13002 LH/RH Clip Poke Yoke Station 4 - use Red Rabbit",
+          "type": "radio",
+          "options": ["Satisfactory", "Not Satisfactory", "Not Applicable"]
+        },
+        {
+          "id": 6,
+          "question": "JL - 13003 Frame Length Poke Yoke x2 - use Red Rabbit",
+          "type": "radio",
+          "options": ["Satisfactory", "Not Satisfactory", "Not Applicable"]
+        },
+        {
+          "id": 7,
+          "question": "JL - 13004 Cup Holder Liner Poke Yoke - use Red Rabbit",
+          "type": "radio",
+          "options": ["Satisfactory", "Not Satisfactory", "Not Applicable"]
+        },
+        {
+          "id": 8,
+          "question": "JL - 13005 Frame Length Poke Yoke Station 1/2/3 - use Red Rabbit",
+          "type": "radio",
+          "options": ["Satisfactory", "Not Satisfactory", "Not Applicable"]
+        },
+        {
+          "id": 9,
+          "question": "JL - 13106 Clip x2 Poke Yoke Station 3 - use Red Rabbit",
+          "type": "radio",
+          "options": ["Satisfactory", "Not Satisfactory", "Not Applicable"]
+        },
+        {
+          "id": 10,
+          "question": "JT - 13025 Frame Length, Missing Bezel and Button - use Red Rabbit",
+          "type": "radio",
+          "options": ["Satisfactory", "Not Satisfactory", "Not Applicable"]
+        },
+        {
+          "id": 11,
+          "question": "JT - 13025 Untucked material - use Red Rabbit",
+          "type": "radio",
+          "options": ["Satisfactory", "Not Satisfactory", "Not Applicable"]
+        },
+        {
+          "id": 12,
+          "question": "JT - 13026 Frame Length Missing Bezel and Button - use Red Rabbit",
+          "type": "radio",
+          "options": ["Satisfactory", "Not Satisfactory", "Not Applicable"]
+        },
+        {
+          "id": 13,
+          "question": "JT - 13026 Untucked material - use Red Rabbit",
+          "type": "radio",
+          "options": ["Satisfactory", "Not Satisfactory", "Not Applicable"]
+        },
+        {
+          "id": 14,
+          "question": "JT - 13029 Frame length Poke Yoke - use Red Rabbit",
+          "type": "radio",
+          "options": ["Satisfactory", "Not Satisfactory", "Not Applicable"]
+        },
+        {
+          "id": 15,
+          "question": "320B - 70338 - Black tape laser alignment - use Red Rabbit",
+          "type": "radio",
+          "options": ["Satisfactory", "Not Satisfactory", "Not Applicable"]
+        },
+        {
+          "id": 16,
+          "question": "P703 - 76770 Frame Length Poke Yoke Station - use Red Rabbit",
+          "type": "radio",
+          "options": ["Satisfactory", "Not Satisfactory", "Not Applicable"]
+        },
+        {
+          "id": 17,
+          "question": "P703 - 76771 Frame Length Poke Yoke Station - use Red Rabbit",
+          "type": "radio",
+          "options": ["Satisfactory", "Not Satisfactory", "Not Applicable"]
+        },
+        {
+          "id": 18,
+          "question": "P703 - 76773 Frame Length Poke Yoke Station - use Red Rabbit",
+          "type": "radio",
+          "options": ["Satisfactory", "Not Satisfactory", "Not Applicable"]
+        },
+        {
+          "id": 19,
+          "question": "25040 - Check fixture for proper function - use Red Rabbit",
+          "type": "radio",
+          "options": ["Satisfactory", "Not Satisfactory", "Not Applicable"]
+        },
+        {
+          "id": 20,
+          "question": "26915 - Check fixture for proper function - use Red Rabbit",
+          "type": "radio",
+          "options": ["Satisfactory", "Not Satisfactory", "Not Applicable"]
+        },
+        {
+          "id": 21,
+          "question": "Tesla S 78324/5 - Are the clip poke yokes working correctly",
+          "type": "radio",
+          "options": ["Satisfactory", "Not Satisfactory", "Not Applicable"]
+        },
+        {
+          "id": 22,
+          "question": "JL -13003 Ensure lube has been applied on all parts",
+          "type": "radio",
+          "options": ["Satisfactory", "Not Satisfactory", "Not Applicable"]
+        },
+        {
+          "id": 23,
+          "question": "JL -13004 station - Only 1 Bag label roll present at the station?",
+          "type": "radio",
+          "options": ["Satisfactory", "Not Satisfactory", "Not Applicable"]
+        },
+        {
+          "id": 24,
+          "question": "JL/JT - Bad Barcode label scanner at labeling station - use Red Rabbit",
+          "type": "radio",
+          "options": ["Satisfactory", "Not Satisfactory", "Not Applicable"]
+        }
+      ]
+    },
+    "FIP 2": {
+      "Section 1": [
+        {
+          "id": 1,
+          "question": "Are all Quality Standards present for parts that are running",
+          "type": "radio",
+          "options": ["Satisfactory", "Not Satisfactory", "Not Applicable"]
+        },
+        {
+          "id": 2,
+          "question": "Are all Pack Standards present for parts that are running",
+          "type": "radio",
+          "options": ["Satisfactory", "Not Satisfactory", "Not Applicable"]
+        },
+        {
+          "id": 3,
+          "question": "Are the all work stations neat clean and orderly (5S)",
+          "type": "radio",
+          "options": ["Satisfactory", "Not Satisfactory", "Not Applicable"]
+        },
+        {
+          "id": 4,
+          "question": "Are all the necessary tools provided to perform the daily task?",
+          "type": "radio",
+          "options": ["Satisfactory", "Not Satisfactory", "Not Applicable"]
+        },
+        {
+          "id": 5,
+          "question": "Are parts in correct designated areas in all stages of the process?",
+          "type": "radio",
+          "options": ["Satisfactory", "Not Satisfactory", "Not Applicable"]
+        },
+        {
+          "id": 6,
+          "question": "910B/922B/220D - Fronts - Poke-yoke on tool is present and operating per design?",
+          "type": "radio",
+          "options": ["Satisfactory", "Not Satisfactory", "Not Applicable"]
+        },
+        {
+          "id": 7,
+          "question": "922B - OB - Poke-yoke on tool is present and operating per design?",
+          "type": "radio",
+          "options": ["Satisfactory", "Not Satisfactory", "Not Applicable"]
+        },
+        {
+          "id": 8,
+          "question": "922B - CTR - Poke-yoke and locator pin on tool is present, and operating per design?",
+          "type": "radio",
+          "options": ["Satisfactory", "Not Satisfactory", "Not Applicable"]
+        },
+        {
+          "id": 9,
+          "question": "922B - CTR - Locator pin on tool is present and operating per design?",
+          "type": "radio",
+          "options": ["Satisfactory", "Not Satisfactory", "Not Applicable"]
+        },
+        {
+          "id": 10,
+          "question": "Part #70503/504s - Waterstrider is using the Changeover sheet between programs in cover boxes?",
+          "type": "radio",
+          "options": ["Satisfactory", "Not Satisfactory", "Not Applicable"]
+        },
+        {
+          "id": 11,
+          "question": "Replacement caps - Make sure teammates are using the replacement identification caps and it stays on until the person needs the part removes it",
+          "type": "radio",
+          "options": ["Satisfactory", "Not Satisfactory", "Not Applicable"]
+        },
+        {
+          "id": 12,
+          "question": "Review FIP2 WIP rack, are the 70503 & 70504 WIP parts on the correct rack shelf",
+          "type": "radio",
+          "options": ["Satisfactory", "Not Satisfactory", "Not Applicable"]
+        },
+        {
+          "id": 13,
+          "question": "Inspect all four Steamer plates by removing blue cover plates - Clean/Notify Maintenance team if found dirty at start-up",
+          "type": "radio",
+          "options": ["Satisfactory", "Not Satisfactory", "Not Applicable"]
+        }
+      ]
+    },
+    "FIP 1": {
+      "Section 1": [
+        {
+          "id": 1,
+          "question": "Are all Quality Standards present for parts that are running",
+          "type": "radio",
+          "options": ["Satisfactory", "Not Satisfactory", "Not Applicable"]
+        },
+        {
+          "id": 2,
+          "question": "Are all Pack Standards present for parts that are running",
+          "type": "radio",
+          "options": ["Satisfactory", "Not Satisfactory", "Not Applicable"]
+        },
+        {
+          "id": 3,
+          "question": "TR8 - Locator pin on tool is present and operating per design?",
+          "type": "radio",
+          "options": ["Satisfactory", "Not Satisfactory", "Not Applicable"]
+        },
+        {
+          "id": 4,
+          "question": "TR8 - Air poke yoke is operating per design to allow lid to go down",
+          "type": "radio",
+          "options": ["Satisfactory", "Not Satisfactory", "Not Applicable"]
+        },
+        {
+          "id": 5,
+          "question": "TR8 - AR - Ensure blocks are not damaged/ worn out/ missing/ gaskets?",
+          "type": "radio",
+          "options": ["Satisfactory", "Not Satisfactory", "Not Applicable"]
+        },
+        {
+          "id": 6,
+          "question": "TR8 - Ensure SOT BLN-QUA-W-334 is being followed and all Sub-Assembly frames are properly taped?",
+          "type": "radio",
+          "options": ["Satisfactory", "Not Satisfactory", "Not Applicable"]
+        },
+        {
+          "id": 7,
+          "question": "JT (13030) - Locator pin on tool is present and operating per design?",
+          "type": "radio",
+          "options": ["Satisfactory", "Not Satisfactory", "Not Applicable"]
+        },
+        {
+          "id": 8,
+          "question": "JT (13030) - Air poke yoke is operating per design to allow lid to go down",
+          "type": "radio",
+          "options": ["Satisfactory", "Not Satisfactory", "Not Applicable"]
+        },
+        {
+          "id": 9,
+          "question": "JL PHEV (13107) - Air poke yoke is operating per design to allow lid to go down",
+          "type": "radio",
+          "options": ["Satisfactory", "Not Satisfactory", "Not Applicable"]
+        },
+        {
+          "id": 10,
+          "question": "JL PHEV (13107) - Ensure lube has been applied on all parts",
+          "type": "radio",
+          "options": ["Satisfactory", "Not Satisfactory", "Not Applicable"]
+        },
+        {
+          "id": 11,
+          "question": "RU - WIP armrest are in the correct locations, no mixed parts between LH and RH in the same tote. All 1R armrest has gone through the process (no missing components)",
+          "type": "radio",
+          "options": ["Satisfactory", "Not Satisfactory", "Not Applicable"]
+        },
+        {
+          "id": 12,
+          "question": "RU - Following SOT BLN-QUA-W-382 on checking the cap hole position",
+          "type": "radio",
+          "options": ["Satisfactory", "Not Satisfactory", "Not Applicable"]
+        },
+        {
+          "id": 13,
+          "question": "RU - Following SOT BLN-QUA-W-384 on using 2 pc block for prep",
+          "type": "radio",
+          "options": ["Satisfactory", "Not Satisfactory", "Not Applicable"]
+        },
+        {
+          "id": 14,
+          "question": "P703 - #76838 - Locator pin on tool is present and operating per design?",
+          "type": "radio",
+          "options": ["Satisfactory", "Not Satisfactory", "Not Applicable"]
+        },
+        {
+          "id": 15,
+          "question": "Adient-Waterstrider is using the Changeover sheet in cover boxes?",
+          "type": "radio",
+          "options": ["Satisfactory", "Not Satisfactory", "Not Applicable"]
+        },
+        {
+          "id": 16,
+          "question": "#13107 & #13030 - Only 1 bag label roll is present on-line at all time?",
+          "type": "radio",
+          "options": ["Satisfactory", "Not Satisfactory", "Not Applicable"]
+        }
+      ]
+    }
+  }
+  

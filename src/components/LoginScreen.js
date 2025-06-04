@@ -21,7 +21,7 @@ const LoginScreen = () => {
       // Attempt to sign in with Firebase Authentication
       await signInWithEmailAndPassword(auth, email, password);
       // On success, navigate to the Dashboard (or another protected route)
-      navigate('/dashboard');
+      navigate('/audit');
     } catch (err) {
       // If an error occurs, display it to the user
       setError(err.message);

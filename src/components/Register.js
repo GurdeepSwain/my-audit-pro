@@ -1,8 +1,9 @@
 // src/components/Register.js
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { auth } from '../firebase';
+import { auth, firestore } from '../firebase';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { doc,setDoc } from 'firebase/firestore';
 
 const Register = () => {
   const [email, setEmail] = useState('');
@@ -15,9 +16,18 @@ const Register = () => {
 
     try {
       // Register the user with Firebase Authentication
-      await createUserWithEmailAndPassword(auth, email, password);
+      const {user} = await createUserWithEmailAndPassword(auth, email, password);
+      await setDoc(
+        // Create a new document in the 'users' collection with the user's UID
+        doc(firestore, 'users', user.uid),
+        {
+          email: user.email,
+          role: 'user', // Default role, can be changed later
+          createdAt: new Date(),
+        }
+      );
       // Redirect to the dashboard or home page after successful registration
-      navigate('/dashboard');
+      navigate('/audit');
     } catch (err) {
       // Set error state to display error message to the user
       setError(err.message);
